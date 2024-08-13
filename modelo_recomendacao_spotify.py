@@ -46,16 +46,22 @@ def get_audio_features_by_playlist(playlist_id):
     
     # Lista vazia contendo as features das musicas é iniciada e através do sp.audio_features é feito a coleta das características de audio de cada música
 
-    features = []
+    audio_features = []
     for item in tracks:
         track_id = item['track']['id']
+        track_name = item['track']['name']
+        ## Trabalhando em solução para trazer o nome dos artistas na consulta
+        artist_name = item['artists'][0]['name']
         features = sp.audio_features(track_id)[0]
         if features:
-            features.append(features)
-    return pd.DataFrame(features)
+            features['track_name'] = track_name
+            features['artist'] = artist_name
+            audio_features.append(features)
+    return pd.DataFrame(audio_features)
 # %%
 minha_playlist_id = '1U4UVF4hG7C7UZafH1nITe'
 df = get_audio_features_by_playlist(minha_playlist_id)
 df.head(10)
+
 
 # %%
