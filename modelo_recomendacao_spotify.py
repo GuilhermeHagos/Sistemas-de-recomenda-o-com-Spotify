@@ -5,6 +5,8 @@ from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
 import os
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
 # %%
 # Carregando arquivo contendo variaveis de ambiente
@@ -50,8 +52,7 @@ def get_audio_features_by_playlist(playlist_id):
     for item in tracks:
         track_id = item['track']['id']
         track_name = item['track']['name']
-        ## Trabalhando em solução para trazer o nome dos artistas na consulta
-        artist_name = item['artists'][0]['name']
+        artist_name = item['track']['artists'][0]['name']
         features = sp.audio_features(track_id)[0]
         if features:
             features['track_name'] = track_name
@@ -64,4 +65,46 @@ df = get_audio_features_by_playlist(minha_playlist_id)
 df.head(10)
 
 
+# %%
+## Teste inicial com modelo de ml kmeans
+#features selecionadas abaixo, quero testar com todas e variar e ver o que o algoritmo considera mais
+features_selected = df[['danceability','energy','valence','tempo']]
+
+# %%
+
+# Normalização é feita para atribuir importância igual entre as features, de forma que não influencie no algoritmo, então a conversão é feita para os valores de 0 a 1
+scaler = StandardScaler()
+scaled_features = scaler.fit_transform(features_selected)
+
+# %%
+
+# Treinamento de modelo
+# Trabalhar com várias hipóteses de número de clusters através de experimentação
+kmeans = KMeans(n_clusters=5)
+kmeans.fit(scaled_features)
+# %%
+#rotulando cluster de cada música
+df['cluster'] = kmeans.labels_
+# %%
+df.head(5)
+# %%
+# Predizendo playlists
+# A ideia é: dada uma playlist, quais músicas eu posso gostar?
+
+def predict_tracks_by_playlist(playlist_id, model, scaler):
+    new_playlist = get_audio_features_by_playlist(playlist_id)
+    new_features = new_playlist[['danceability','energy','valence','tempo']]
+    scaled_new_features = scaler.transform(new_features)
+    predict = model.predict(scaled_new_features)
+
+    new_playlist['cluster'] = predict
+    return new_playlist
+
+
+# %%
+# Testando predict
+
+nova_playlist = '3hrXi2n3e8PcA3rK6emPa6'
+predicted_tracks_df = predict_tracks_by_playlist(nova_playlist, kmeans, scaler)
+predicted_tracks_df.head(10)
 # %%
