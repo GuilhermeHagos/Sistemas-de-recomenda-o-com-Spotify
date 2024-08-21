@@ -26,9 +26,54 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     client_secret = SPOTIPY_CLIENT_SECRET,
     redirect_uri = SPOTIPY_REDIRECT_URI,
     # alterei scope por entender qque o abaixo se adequa as ideias do projeto de contruir playlist através de outras
-    scope = 'user-library-modify playlist-modify-public'
+    scope = 'user-library-read playlist-modify-private playlist-modify-public'
 ))
 
+
+# %%
+
+#Transportando musicas de 'musicas curtidas' para uma playlist publica, de forma a conseguir uma variedade maior das músicas que ouço
+
+def get_liked_songs(sp):
+    '''
+    Através de autenticator, retorna lista com as musicas dentro de playlist privada 'Musicas curtidas'
+    '''
+    liked_songs = []
+    offset = 0
+    limit = 50
+    total_tracks = 1
+    
+    while offset < total_tracks:
+        results = sp.current_user_saved_tracks(limit=limit, offset=offset)
+        total_tracks = results['total']  # Número total de músicas curtidas
+        for item in results['items']:
+            track = item['track']
+            liked_songs.append(track['id'])  # Armazena o ID da música
+        offset += limit  # Atualiza o offset para buscar a próxima página
+
+    return liked_songs
+
+liked_songs = get_liked_songs(sp)
+
+# %%
+
+def add_100_songs_to_playlist(sp,playlist_id,songs_list):
+    for i in range(0, len(songs_list),100):
+        sp.playlist_add_items(playlist_id=playlist['id'], items=songs_list[i:i + 100])
+# %%
+
+playlist_name =' Minhas Musicas curtidas'
+playlist_description = 'Playlist criada para projetos pessoais'
+
+#Criando playlist
+playlist = sp.user_playlist_create(user = sp.me()['id'], name = playlist_name, public=False, description=playlist_description)
+
+#Adicionando Liked songs em playlist criada
+
+add_100_songs_to_playlist(sp,playlist_id= playlist['id'],songs_list=liked_songs)
+
+
+print(f"Playlist '{playlist_name}' criada!")
 
 # %%
 
@@ -60,7 +105,7 @@ def get_audio_features_by_playlist(playlist_id):
             audio_features.append(features)
     return pd.DataFrame(audio_features)
 # %%
-minha_playlist_id = '1U4UVF4hG7C7UZafH1nITe'
+minha_playlist_id = '63hN35EdANktwTTx6JsqhM'
 df = get_audio_features_by_playlist(minha_playlist_id)
 df.head(10)
 
