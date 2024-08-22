@@ -153,3 +153,5 @@ nova_playlist = '3hrXi2n3e8PcA3rK6emPa6'
 predicted_tracks_df = predict_tracks_by_playlist(nova_playlist, kmeans, scaler)
 predicted_tracks_df.head(10)
 # %%
+
+#Dividir os dados em treinamento e teste e depois validar com outra playlist pessoal
