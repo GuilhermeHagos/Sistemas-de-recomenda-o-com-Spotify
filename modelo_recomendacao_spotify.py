@@ -7,7 +7,8 @@ import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import silhouette_score
 # %%
 # Carregando arquivo contendo variaveis de ambiente
 dotenv_path = 'E:\Programinhas\GitHub_Projects\Sistemas de recomendação com Spotify\Variaveis_ambiente.env'
@@ -100,16 +101,30 @@ def get_audio_features_by_playlist(playlist_id):
         artist_name = item['track']['artists'][0]['name']
         features = sp.audio_features(track_id)[0]
         if features:
-            features['track_name'] = track_name
-            features['artist'] = artist_name
-            audio_features.append(features)
+            selected_features = {
+                'danceability': features['danceability'],
+                'energy': features['energy'],
+                'valence' : features['valence'],
+                'tempo' : features['tempo'],
+                'track_name' : item['track']['name'],
+                'artist_name': item['track']['artists'][0]['name']
+            
+            }
+            audio_features.append(selected_features)
+
     return pd.DataFrame(audio_features)
 # %%
 minha_playlist_id = '63hN35EdANktwTTx6JsqhM'
 df = get_audio_features_by_playlist(minha_playlist_id)
 df.head(10)
 
+# %%
+train_df, test_df = train_test_split(df,test_size=0.2, random_state=42)
 
+# %%
+numeric_columns = train_df.select_dtypes(include=['float64','int64']).columns
+x_train = train_df[numeric_columns]
+x_test = test_df[numeric_columns]
 # %%
 ## Teste inicial com modelo de ml kmeans
 #features selecionadas abaixo, quero testar com todas e variar e ver o que o algoritmo considera mais
@@ -119,20 +134,27 @@ features_selected = df[['danceability','energy','valence','tempo']]
 
 # Normalização é feita para atribuir importância igual entre as features, de forma que não influencie no algoritmo, então a conversão é feita para os valores de 0 a 1
 scaler = StandardScaler()
-scaled_features = scaler.fit_transform(features_selected)
+scaled_x_train = scaler.fit_transform(x_train)
+scaled_x_test = scaler.transform(x_test)
 
 # %%
 
 # Treinamento de modelo
 # Trabalhar com várias hipóteses de número de clusters através de experimentação
-kmeans = KMeans(n_clusters=5)
-kmeans.fit(scaled_features)
+kmeans = KMeans(n_clusters=5, random_state=42)
+kmeans.fit(scaled_x_train)
 # %%
-#rotulando cluster de cada música
-df['cluster'] = kmeans.labels_
+#teste
+test_labels = kmeans.predict(scaled_x_test)
 # %%
-df.head(5)
+silhouette_avg = silhouette_score(scaled_x_test, test_labels)
+print(f"silhouett Score: {silhouette_avg:.2f}")
+
+#%%
+test_df['cluster'] = test_labels
+print(test_df[['track_name','cluster']].head(10))
 # %%
+'''
 # Predizendo playlists
 # A ideia é: dada uma playlist, quais músicas eu posso gostar?
 
@@ -152,6 +174,7 @@ def predict_tracks_by_playlist(playlist_id, model, scaler):
 nova_playlist = '3hrXi2n3e8PcA3rK6emPa6'
 predicted_tracks_df = predict_tracks_by_playlist(nova_playlist, kmeans, scaler)
 predicted_tracks_df.head(10)
+'''
 # %%
 
 #Dividir os dados em treinamento e teste e depois validar com outra playlist pessoal
