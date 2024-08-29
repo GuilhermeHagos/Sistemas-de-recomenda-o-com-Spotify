@@ -5,6 +5,8 @@ from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
 import os
 import pandas as pd
+import seaborn as sns
+import matplotlib as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
@@ -104,8 +106,13 @@ def get_audio_features_by_playlist(playlist_id):
             selected_features = {
                 'danceability': features['danceability'],
                 'energy': features['energy'],
-                'valence' : features['valence'],
-                'tempo' : features['tempo'],
+                #'valence' : features['valence'],
+                ##'tempo' : features['tempo'],
+                #testando com todas features
+                #'speechiness' : features['speechiness'],
+                'acousticness' : features['acousticness'],
+                #'instrumentalness' : features['instrumentalness'],
+                #'liveness' : features['liveness'],
                 'track_name' : item['track']['name'],
                 'artist_name': item['track']['artists'][0]['name']
             
@@ -117,6 +124,12 @@ def get_audio_features_by_playlist(playlist_id):
 minha_playlist_id = '63hN35EdANktwTTx6JsqhM'
 df = get_audio_features_by_playlist(minha_playlist_id)
 df.head(10)
+
+# %%
+numeric_columns = df.select_dtypes(include=['float64','int64']).columns
+corr = df[numeric_columns].corr()
+sns.heatmap(corr, annot=True, cmap="coolwarm")
+plt.show()
 
 # %%
 train_df, test_df = train_test_split(df,test_size=0.2, random_state=42)
