@@ -30,7 +30,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     redirect_uri = SPOTIPY_REDIRECT_URI,
     # alterei scope por entender qque o abaixo se adequa as ideias do projeto de contruir playlist através de outras
     scope = 'user-library-read playlist-modify-private playlist-modify-public'
-))
+), requests_timeout=10)
 
 
 # %%
@@ -99,19 +99,16 @@ def get_audio_features_by_playlist(playlist_id):
     audio_features = []
     for item in tracks:
         track_id = item['track']['id']
-        track_name = item['track']['name']
-        artist_name = item['track']['artists'][0]['name']
         features = sp.audio_features(track_id)[0]
         if features:
             selected_features = {
-                'danceability': features['danceability'],
+                #'danceability': features['danceability'],
                 'energy': features['energy'],
                 #'valence' : features['valence'],
-                ##'tempo' : features['tempo'],
-                #testando com todas features
+                #'tempo' : features['tempo'],
                 #'speechiness' : features['speechiness'],
-                'acousticness' : features['acousticness'],
-                #'instrumentalness' : features['instrumentalness'],
+                #'acousticness' : features['acousticness'],
+                'instrumentalness' : features['instrumentalness'],
                 #'liveness' : features['liveness'],
                 'track_name' : item['track']['name'],
                 'artist_name': item['track']['artists'][0]['name']
@@ -154,7 +151,7 @@ scaled_x_test = scaler.transform(x_test)
 
 # Treinamento de modelo
 # Trabalhar com várias hipóteses de número de clusters através de experimentação
-kmeans = KMeans(n_clusters=5, random_state=42)
+kmeans = KMeans(n_clusters=2, random_state=42)
 kmeans.fit(scaled_x_train)
 # %%
 #teste
