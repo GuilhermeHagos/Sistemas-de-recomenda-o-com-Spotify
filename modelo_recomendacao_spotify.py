@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import silhouette_score
+from wordcloud import WordCloud
 # %%
 # Carregando arquivo contendo variaveis de ambiente
 dotenv_path = 'E:\Programinhas\GitHub_Projects\Sistemas de recomendação com Spotify\Variaveis_ambiente.env'
@@ -105,7 +106,7 @@ def get_audio_features_by_playlist(playlist_id):
                 #'danceability': features['danceability'],
                 'energy': features['energy'],
                 #'valence' : features['valence'],
-                #'tempo' : features['tempo'],
+                'tempo' : features['tempo'],
                 #'speechiness' : features['speechiness'],
                 #'acousticness' : features['acousticness'],
                 'instrumentalness' : features['instrumentalness'],
@@ -151,7 +152,7 @@ scaled_x_test = scaler.transform(x_test)
 
 # Treinamento de modelo
 # Trabalhar com várias hipóteses de número de clusters através de experimentação
-kmeans = KMeans(n_clusters=2, random_state=42)
+kmeans = KMeans(n_clusters=4, random_state=42)
 kmeans.fit(scaled_x_train)
 # %%
 #teste
@@ -164,13 +165,13 @@ print(f"silhouett Score: {silhouette_avg:.2f}")
 test_df['cluster'] = test_labels
 print(test_df[['track_name','cluster']].head(10))
 # %%
-'''
+
 # Predizendo playlists
 # A ideia é: dada uma playlist, quais músicas eu posso gostar?
 
 def predict_tracks_by_playlist(playlist_id, model, scaler):
     new_playlist = get_audio_features_by_playlist(playlist_id)
-    new_features = new_playlist[['danceability','energy','valence','tempo']]
+    new_features = new_playlist[['energy','tempo', 'instrumentalness']]
     scaled_new_features = scaler.transform(new_features)
     predict = model.predict(scaled_new_features)
 
@@ -184,7 +185,29 @@ def predict_tracks_by_playlist(playlist_id, model, scaler):
 nova_playlist = '3hrXi2n3e8PcA3rK6emPa6'
 predicted_tracks_df = predict_tracks_by_playlist(nova_playlist, kmeans, scaler)
 predicted_tracks_df.head(10)
-'''
+
 # %%
 
-#Dividir os dados em treinamento e teste e depois validar com outra playlist pessoal
+#Criando Nuvem de palavras para observar divisões nos clusters e musicas em cada um
+
+df_filtered = test_df[['track_name','cluster']]
+df_filtered.head()
+
+# %%
+grouped_df = df_filtered.groupby('cluster')['track_name'].apply(lambda x: ' '.join(x)).reset_index()
+grouped_df
+# %%
+#cria nuvem de palavras
+def create_wordcloud(text, title):
+    # Gerar a nuvem de palavras
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    
+    # Mostrar a nuvem de palavras
+    plt.figure(figsize=(8, 5))  # Não deve causar erro se plt for o matplotlib.pyplot
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.title(title, fontsize=20)
+    plt.axis("off")
+    plt.show()
+# %%
+grouped_df.apply(lambda row: create_wordcloud(row['track_name'], f'Cluster {row["cluster"]}'), axis=1)
+# %%
