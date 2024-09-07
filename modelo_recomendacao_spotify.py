@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 import seaborn as sns
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
@@ -199,15 +199,21 @@ grouped_df
 # %%
 #cria nuvem de palavras
 def create_wordcloud(text, title):
-    # Gerar a nuvem de palavras
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
     
-    # Mostrar a nuvem de palavras
-    plt.figure(figsize=(8, 5))  # Não deve causar erro se plt for o matplotlib.pyplot
+    wordcloud = WordCloud(width=1200, height=400, max_words=500, background_color='white').generate(text)
+    
+    plt.figure(figsize=(12, 8))  
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.title(title, fontsize=20)
     plt.axis("off")
     plt.show()
 # %%
 grouped_df.apply(lambda row: create_wordcloud(row['track_name'], f'Cluster {row["cluster"]}'), axis=1)
+# %%
+
+df_filtered_predicted = predicted_tracks_df[['track_name','cluster']]
+grouped_df_predicted = df_filtered_predicted.groupby('cluster')['track_name'].apply(lambda x: ' '.join(x)).reset_index()
+
+# %%
+grouped_df_predicted.apply(lambda row: create_wordcloud(row['track_name'], f'Cluster {row["cluster"]}'), axis=1)
 # %%
