@@ -217,3 +217,4 @@ grouped_df_predicted = df_filtered_predicted.groupby('cluster')['track_name'].ap
 # %%
 grouped_df_predicted.apply(lambda row: create_wordcloud(row['track_name'], f'Cluster {row["cluster"]}'), axis=1)
 # %%
+## Testar novas configuracoes de plots para as nuvens de palavras
